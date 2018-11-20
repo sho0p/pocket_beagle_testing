@@ -70,16 +70,24 @@ typedef void (*INTPOINT)(int);
 #define IRQ_MIRCLEAR3		(INTC_BASE+0xE8)
 #define IRQ_ISR_SET3		(INTC_BASE+0xF0)
 
-volatile unsigned int numcnt = 0x00100000;
 
 void (*funcVectors[MAX_INTERRUPTS])(void);
 
+void blink ( void )
+{
+	unsigned int ra = GET32(GPIO1_DATAOUT);
+	if ( (ra&=0x01E00000) == 0 )
+	{
+		PUT32(GPIO1_SETDATAOUT, 0x01E00000);
+		return;
+	}
+	PUT32(GPIO1_CLEARDATAOUT, 0x01E00000);
+	return;
+}
 
 void timer_interrupt(){
 	PUT32(DMTIMER0_TCRR, 0x00000000); //reset the timer
-	PUT32(GPIO1_CLEARDATAOUT,0x01E00000);
-	PUT32(GPIO1_SETDATAOUT, GPIO_DATA_BASE+numcnt);
-	numcnt+=0x00200000;
+	blink();
 }
 
 void bank2_interrupt_handler(){
@@ -97,6 +105,7 @@ int notmain ( void )
 	}
 	PUT32(GPIO1_OE,0xFE1FFFFF);
 	PUT32(DMTIMER0_TCLR,0x00000003);
+	blink();
 	//This first block is designed to set a bunch of interrupt specific things
 	//First off we set the AUTOIDLE bit (the 0 bit of the SYSCONFIG register
 	//of the interrupt controller) in order to save power consumption by putting
@@ -128,12 +137,12 @@ int notmain ( void )
 	PUT32(DMTIMER0_TMAR, 0x00004000);
 
 
-
+	blink();
 	//Next we load the ISR_SET bank for the interrupt handler. Give it a pointer
 	//to the function which will be our interrupt handler.
 	unsigned int funcptr = (int)&bank2_interrupt_handler;
-	PUT32(0xFFFF0000 + TIMER0_INT_NUM, funcptr);
-	PUT32(0x00000000 + TIMER0_INT_NUM, funcptr);
+	PUT32(0xFFFF0000 , funcptr);
+	PUT32(0x00000000 , funcptr);
 
 	PUT32(DMTIMER0_TCRR, 0x00000000); //Right before we start, just reset
 					  //the timer

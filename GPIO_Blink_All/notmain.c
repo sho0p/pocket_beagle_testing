@@ -28,19 +28,19 @@ extern void ASMDELAY ( unsigned int );
 #define CM_PER_BASE     0x44E00000
 #define CM_PER_GPIO1_CLKCTRL (CM_PER_BASE+0xAC)
 #define CM_WKUP_TIMER0_CLKCTRL (CM_PER_BASE+0x10)
-#define GPIO_DATA_BASE_EMPTY	0x00000000
-#define GPIO_DATA_BASE_FULL	0x01E00000
+#define GPIO_DATA_BASE	0x000F0000
 
-void binary_cnt ( void ) 
+void blink ( void )
 {
 	unsigned int ra = GET32(GPIO1_DATAOUT);
-	PUT32(GPIO1_CLEARDATAOUT, GPIO_DATA_BASE_FULL);
-	if( (ra == GPIO_DATA_BASE_FULL) )
-	{
+	if ( (ra&=0x01E00000) == 0 ){
+		PUT32(GPIO1_SETDATAOUT, 0x01E00000);
 		return;
 	}
-	PUT32( GPIO1_SETDATAOUT, ra+=0x00200000);
+	PUT32(GPIO1_CLEARDATAOUT, 0x01E00000);
+	return;
 }
+
 
 int notmain ( void )
 {
@@ -53,28 +53,25 @@ int notmain ( void )
     }
     PUT32(GPIO1_OE,0xFE1FFFFF); 
     PUT32(DMTIMER0_TCLR,0x00000003);
-    PUT32(GPIO1_SETDATAOUT, 0x00000000);
     while(1)
     {
+	blink();
         while(1)
         {
             ra=GET32(DMTIMER0_TCRR);
-            if((ra&=0x8000)==0) break;
+            if((ra&=0x4000)==0) break;
         }
-	binary_cnt();	
         while(1)
         {
             ra=GET32(DMTIMER0_TCRR);
-            if((ra&=0x8000)!=0) break;
+            if((ra&=0x4000)!=0) break;
         }
-	binary_cnt();
      /*   PUT32(GPIO1_CLEARDATAOUT,GPIO_DATA_BASE+i);
         while(1)
         {
             ra=GET32(DMTIMER0_TCRR);
             if((ra&=0x4000)!=0) break;
         }*/
-	
     }
     return(0);
 }

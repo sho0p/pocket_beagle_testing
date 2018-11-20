@@ -1,0 +1,5 @@
+
+This example uses DMTIMER0 which is connected to the internal 32k
+oscillator.  0x8000 (0x4000 * 2) results in one led state cycle per second.
+
+This example uses a subroutine to test out putting the blinking functionality into a subroutine, for use primarily to be copied over to the interrupt version.
