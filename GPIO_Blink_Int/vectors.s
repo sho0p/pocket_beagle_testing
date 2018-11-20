@@ -25,3 +25,10 @@ ASMDELAY:
     bne ASMDELAY
     bx lr
 
+.globl SAVECONTEXT
+SAVECONTEXT:
+    STMFD SP!, {R0-R12, LR} 
+
+.globl GETCONTEXT
+GETCONTEXT:
+    LDMFD SP!, {R0-R12, LR}
